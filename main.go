@@ -27,6 +27,8 @@ var repositoryPathFlag string
 var serviceNameFlag string
 var serviceVersionFlag string
 var traceNameFlag string
+var skipTracesFlag bool
+var skipMetricsFlag bool
 
 var runtimeAttributes []attribute.KeyValue
 
@@ -35,6 +37,8 @@ func init() {
 	flag.StringVar(&serviceNameFlag, "service-name", "", "OpenTelemetry Service Name to be used when sending traces and metrics for the jUnit report")
 	flag.StringVar(&serviceVersionFlag, "service-version", "", "OpenTelemetry Service Version to be used when sending traces and metrics for the jUnit report")
 	flag.StringVar(&traceNameFlag, "trace-name", Junit2otlp, "OpenTelemetry Trace Name to be used when sending traces and metrics for the jUnit report")
+	flag.BoolVar(&skipTracesFlag, "skip-traces", false, "Skip sending traces to the OpenTelemetry collector")
+	flag.BoolVar(&skipMetricsFlag, "skip-metrics", false, "Skip sending metrics to the OpenTelemetry collector")
 
 	// initialise runtime keys
 	runtimeAttributes = []attribute.KeyValue{
@@ -158,6 +162,10 @@ func getOtlpServiceVersion() string {
 }
 
 func initMetricsProvider(ctx context.Context, res *resource.Resource) (*sdkmetric.MeterProvider, error) {
+	if skipMetricsFlag {
+		return sdkmetric.NewMeterProvider(), nil
+	}
+
 	exporter, err := otlpmetricgrpc.New(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create the collector exporter: %v", err)
@@ -175,6 +183,10 @@ func initMetricsProvider(ctx context.Context, res *resource.Resource) (*sdkmetri
 }
 
 func initTracerProvider(ctx context.Context, res *resource.Resource) (*sdktrace.TracerProvider, error) {
+	if skipTracesFlag {
+		return sdktrace.NewTracerProvider(), nil
+	}
+
 	traceExporter, err := otlptracegrpc.New(ctx)
 	if err != nil {
 		return nil, err
