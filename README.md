@@ -145,6 +145,7 @@ This tool is able to override the following attributes:
 | Service Name | --service-name | `junit2otlp` | Overrides OpenTelemetry's service name. If the `OTEL_SERVICE_NAME` environment variable is set, it will take precedence over any other value. |
 | Service Version | --service-version | Empty | Overrides OpenTelemetry's service version. If the `OTEL_SERVICE_VERSION` environment variable is set, it will take precedence over any other value. |
 | Trace Name | --trace-name | `junit2otlp` | Overrides OpenTelemetry's trace name. |
+| Properties Allowed | --properties-allowed | All | Comma separated list of properties to be allowed in the jUnit report. |
 | Skip Sending Traces | --skip-traces | `false` | Skip sending traces to the OpenTelemetry collector. |
 | Skip Sending Metrics | --skip-metrics | `false` | Skip sending metrics to the OpenTelemetry collector. |
 
