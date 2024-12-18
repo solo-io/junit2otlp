@@ -163,19 +163,21 @@ This tool is going to parse the XML report produced by jUnit, or any other tool 
 The following attributes are added as metrics and/or traces.
 
 #### Test execution attributes
-For each test execution, represented by a test report file, the tool will add the following attributes to the metric document, including them in the trace representing the test execution.
+For each test execution, represented by a test report file, the tool will add the following metric document, including them in the trace representing the test execution.
 
 | Attribute | Description |
 | --------- | ----------- |
 | `tests.suite.failed` | Number of failed tests in the test execution |
 | `tests.suite.error` | Number of errored tests in the test execution |
-| `tests.suite.passed` | Number of passed tests in the test execution |
 | `tests.suite.skipped` | Number of skipped tests in the test execution |
-| `tests.suite.duration` | Duration of the test execution |
-| `tests.suite.suitename` | Name of the test execution |
-| `tests.suite.systemerr` | Log produced by Systemerr |
-| `tests.suite.systemout` | Log produced by Systemout |
+| `tests.suite.passed` | Number of passed tests in the test execution |
 | `tests.suite.total` | Total number of tests in the test execution |
+| `tests.suite.duration` | Duration of the test execution |
+| `tests.case.failed` | The test failed |
+| `tests.case.error` | The test errored |
+| `tests.case.skipped` | The test errored |
+| `tests.case.passed` | The test passed |
+| `tests.case.duration` | Duration of the test execution |
 
 #### Test case attributes
 For each test case in the test execution, the tool will add the following attributes to the span document representing the test case:
