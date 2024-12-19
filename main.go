@@ -101,6 +101,7 @@ func createTracesAndSpans(ctx context.Context, srvName string, tracesProvides *s
 	caseDurationCounter := createIntCounter(meter, CaseDuration, "Duration of the tests")
 	caseDurationHistogram := createFloat64Histogram(meter, CaseDurationHist, "Duration of the tests", "s")
 
+	// outer span for the whole report
 	ctx, outerSpan := tracer.Start(ctx, traceNameFlag, trace.WithAttributes(runtimeAttributes...),
 		trace.WithSpanKind(trace.SpanKindServer))
 	defer outerSpan.End()
