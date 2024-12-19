@@ -359,17 +359,17 @@ func Test_Main_SampleXML(t *testing.T) {
 	resourceMetrics := testReport.resourceMetrics.Metrics[0]
 	metrics := resourceMetrics.InstrumentationLibraryMetrics[0].Metrics
 
-	assert.Equal(t, "tests.suite.error", metrics[0].Name)
-	assert.Equal(t, "tests.suite.failed", metrics[1].Name)
-	assert.Equal(t, "tests.suite.skipped", metrics[2].Name)
-	assert.Equal(t, "tests.suite.passed", metrics[3].Name)
-	assert.Equal(t, "tests.suite.total", metrics[4].Name)
-	assert.Equal(t, "tests.suite.duration", metrics[5].Name)
-	assert.Equal(t, "tests.suite.duration.histogram", metrics[6].Name)
+	assert.Equal(t, ErrorTestsCount, metrics[0].Name)
+	assert.Equal(t, FailedTestsCount, metrics[1].Name)
+	assert.Equal(t, SkippedTestsCount, metrics[2].Name)
+	assert.Equal(t, PassedTestsCount, metrics[3].Name)
+	assert.Equal(t, TotalTestsCount, metrics[4].Name)
+	assert.Equal(t, TestsDuration, metrics[5].Name)
+	assert.Equal(t, TestsDurationHist, metrics[6].Name)
 
-	assert.Equal(t, "tests.case.passed", metrics[7].Name)
-	assert.Equal(t, "tests.case.duration", metrics[8].Name)
-	assert.Equal(t, "tests.case.duration.histogram", metrics[9].Name)
+	assert.Equal(t, CasePassedCount, metrics[7].Name)
+	assert.Equal(t, CaseDuration, metrics[8].Name)
+	assert.Equal(t, CaseDurationHist, metrics[9].Name)
 }
 
 func Test_GetServiceVariable(t *testing.T) {
