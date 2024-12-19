@@ -326,7 +326,6 @@ func Test_Main_SampleXML(t *testing.T) {
 	assertStringValueInAttribute(t, srvVersionAttribute.Value, "")
 
 	instrumentationLibrarySpans := resourceSpans.InstrumentationLibrarySpans[0]
-
 	assert.Equal(t, "jaeger-srv-test", instrumentationLibrarySpans.InstrumentationLibrary.Name)
 
 	spans := instrumentationLibrarySpans.Spans
@@ -355,6 +354,22 @@ func Test_Main_SampleXML(t *testing.T) {
 	// last span is server type
 	aTestCase = spans[expectedSpansCount-1]
 	assert.Equal(t, "SPAN_KIND_SERVER", aTestCase.Kind)
+
+	// metrics
+	resourceMetrics := testReport.resourceMetrics.Metrics[0]
+	metrics := resourceMetrics.InstrumentationLibraryMetrics[0].Metrics
+
+	assert.Equal(t, ErrorTestsCount, metrics[0].Name)
+	assert.Equal(t, FailedTestsCount, metrics[1].Name)
+	assert.Equal(t, SkippedTestsCount, metrics[2].Name)
+	assert.Equal(t, PassedTestsCount, metrics[3].Name)
+	assert.Equal(t, TotalTestsCount, metrics[4].Name)
+	assert.Equal(t, TestsDuration, metrics[5].Name)
+	assert.Equal(t, TestsDurationHist, metrics[6].Name)
+
+	assert.Equal(t, CasePassedCount, metrics[7].Name)
+	assert.Equal(t, CaseDuration, metrics[8].Name)
+	assert.Equal(t, CaseDurationHist, metrics[9].Name)
 }
 
 func Test_GetServiceVariable(t *testing.T) {
