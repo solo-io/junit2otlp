@@ -112,7 +112,6 @@ func createTracesAndSpans(ctx context.Context, srvName string, tracesProvides *s
 		suiteAttributes := []attribute.KeyValue{
 			semconv.CodeNamespaceKey.String(suite.Package),
 			attribute.Key(TestsSuiteName).String(suite.Name),
-			// attribute.Key(TestsDuration).Int64(suite.Totals.Duration.Milliseconds()),
 		}
 		suiteAttributes = append(suiteAttributes, runtimeAttributes...)
 		suiteAttributes = append(suiteAttributes, propsToLabels(suite.Properties)...)
@@ -132,6 +131,7 @@ func createTracesAndSpans(ctx context.Context, srvName string, tracesProvides *s
 		// attributes for the suite span
 		suiteSpanAttributes := append([]attribute.KeyValue{}, suiteAttributes...)
 		suiteSpanAttributes = append(suiteSpanAttributes,
+			attribute.Key(TestsDuration).Int64(suite.Totals.Duration.Milliseconds()),
 			attribute.Key(TestsSystemErr).String(suite.SystemErr),
 			attribute.Key(TestsSystemOut).String(suite.SystemOut),
 		)

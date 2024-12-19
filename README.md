@@ -7,9 +7,11 @@ This simple CLI, written in Go, is sending jUnit metrics to a back-end using [Op
 > Inspired by https://github.com/axw/test2otlp, which sends traces and spans for `go test` JSON events as they occur.
 
 ## Background
+
 As jUnit represents a de-facto standard for test results in every programming language, this tool consumes the XML files produced by the test runner (or a tool converting to xUnit format), sending metrics to one or more open-source or commercial back-ends with Open Telemetry.
 
 ## Supported CI runners
+
 This tool will work in the context of a CI runner, such as a Github action, a Jenkins job, a Gitlab runner, or even a local execution. This is important because it will use the context of the CI execution to infer the attributes to be added to the OpenTelemetry traces and spans.
 
 In particular the order of evaluation to detect the right execution context is the following:
@@ -19,6 +21,7 @@ In particular the order of evaluation to detect the right execution context is t
 ```
 
 ### Local execution
+
 It reads the environment variables that are avaible in the context of a local execution, representing the fallback if no context is discovered:
 
 ```golang
@@ -73,6 +76,7 @@ func FromGithub() *ScmContext {
 ```
 
 ### Jenkins multibranch pipelines
+
 It reads the environment variables that are avaible in the context of a Jenkins multibranch pipeline execution:
 
 ```golang
@@ -109,6 +113,7 @@ func FromJenkins() *ScmContext {
 ```
 
 ### Gitlab Runners
+
 It reads the environment variables that are avaible in the context of a Gitlab runner execution:
 
 ```golang
@@ -137,6 +142,7 @@ func FromGitlab() *ScmContext {
 ```
 
 ## OpenTelemetry configuration
+
 This tool is able to override the following attributes:
 
 | Attribute | Flag | Default value | Description |
@@ -153,19 +159,17 @@ For using this tool in a distributed tracing scenario, where there is a parent t
 
 For further reference on environment variables in the OpenTelemetry SDK, please read the [official specification](https://opentelemetry.io/docs/reference/specification/sdk-environment-variables/)
 
-## OpenTelemetry Attributes
-This tool is going to parse the XML report produced by jUnit, or any other tool converting to that format, adding different attributes, separated by different categories:
+## Traces
 
-- Test metrics attributes
-- Ownership attributes
+Traces are sent to the OpenTelemetry collector, representing the test execution. Each run of the tool will create a root trace that contains spans for each suite. Each suite will contain spans for each test case.
 
-### Metrics and Traces
-The following attributes are added as metrics and/or traces.
+In addition to the common attributes, the tool will add the following attributes to the trace document representing the test execution:
 
-#### Test execution attributes
-For each test execution, represented by a test report file, the tool will add the following metric document, including them in the trace representing the test execution.
+## Metrics 
 
-| Attribute | Description |
+For each test execution, represented by a test report file, the tool will add the following metrics to the document, including them in the trace representing the test execution.
+
+| Metric    | Description |
 | --------- | ----------- |
 | `tests.suite.failed` | Number of failed tests in the test execution |
 | `tests.suite.error` | Number of errored tests in the test execution |
@@ -173,29 +177,41 @@ For each test execution, represented by a test report file, the tool will add th
 | `tests.suite.passed` | Number of passed tests in the test execution |
 | `tests.suite.total` | Total number of tests in the test execution |
 | `tests.suite.duration` | Duration of the test execution |
+| `tests.suite.duration.histogram` | Histogram of the test execution duration |
 | `tests.case.failed` | The test failed |
 | `tests.case.error` | The test errored |
 | `tests.case.skipped` | The test errored |
 | `tests.case.passed` | The test passed |
 | `tests.case.duration` | Duration of the test execution |
+| `tests.case.duration.histogram` | Histogram of the test execution duration |
 
-#### Test case attributes
-For each test case in the test execution, the tool will add the following attributes to the span document representing the test case:
+## OpenTelemetry Attributes
+
+This tool is going to parse the XML report produced by jUnit, or any other tool converting to that format, adding different attributes, separated by different categories:
+
+- Runtime attributes
+- Ownership attributes
+- Report properties
+- Test suite attributes
+- Test case attributes
+
+### Runtime attributes
+
+Runtime attributes are added to the root trace, spans, and metrics sent by the tool.
 
 | Attribute | Description |
 | --------- | ----------- |
-| `tests.case.classname` | Classname or file for the test case |
-| `tests.case.duration` | Duration of the test case |
-| `tests.case.error` | Error message of the test case |
-| `tests.case.message` | Message of the test case |
-| `tests.case.status` | Status of the test case |
-| `tests.case.systemerr` | Log produced by Systemerr |
-| `tests.case.systemout` | Log produced by Systemout |
+| `host.arch` | Architecture of the host where the test execution is processed |
+| `os.name` | Name of the OS where the test execution is processed |
+| `service.name` | Name of the service where the test execution is processed |
+| `service.version` | Version of the service where the test execution is processed |
 
 ### Ownership attributes
-These attributes are added to the traces and spans sent by the tool, identifying the owner (or owners) of the test suite, trying to correlate a test failure with an author or authors. To identify the owner, the tool will inspect the SCM repository for the project.
+
+These attributes are added to the traces, spans and metrics, identifying the owner (or owners) of the test suite, trying to correlate a test failure with an author or authors. To identify the owner, the tool will inspect the SCM repository for the project.
 
 #### SCM attributes
+
 Because the XML test report is evaluated for a project **in a SCM repository**, the tool will add the following attributes to each trace and span:
 
 | Attribute | Description |
@@ -209,7 +225,8 @@ Because the XML test report is evaluated for a project **in a SCM repository**, 
 | `scm.type` | Type of the SCM (i.e. git, svn, mercurial)  At this moment the tool only supports Git repositories. |
 
 #### Change request attributes
-The tool will add the following attributes to each trace and span if and only if the XML test report is evaluated in the context of a change requests **for a Git repository**:
+
+The tool will add the following attributes to each trace, span, and metric if and only if the XML test report is evaluated in the context of a change requests **for a Git repository**:
 
 | Attribute | Description |
 | --------- | ----------- |
@@ -220,6 +237,39 @@ The tool will add the following attributes to each trace and span if and only if
 | `scm.git.files.modified` | Number of modified files in the changeset |
 
 A changeset is calculated based on the HEAD commit and the first ancestor between HEAD and the branch where the changeset is submitted against.
+
+### Report properties 
+
+The jUnit XML report can contain properties at different levels. The tool will add the properties to the testsuite and testcase spans automatically. If the `--properties-allowed` flag is set, only the properties listed in the flag will be added to the spans.
+
+### Test suite attributes
+
+For each test suite in the test execution, the tool will add the following attributes to the span document representing the test suite:
+
+| Attribute | Spans | Metrics | Description |
+| --------- | ----- | ------- | ----------- |
+| `code.namespace` | x | x | Class/module of the test suite |
+| `tests.suite.suitename` | x | x | Name of the test suite |
+| `tests.suite.duration` | x | | Duration of the test suite |
+| `tests.suite.systemerr` | x | | Log produced by Systemerr |
+| `tests.suite.systemout` | x | | Log produced by Systemout |
+
+### Test case attributes
+
+For each test case in the test execution, the tool will add the following attributes to the span document representing the test case:
+
+| Attribute | Spans | Metrics | Description |
+| --------- | ----- | ------- | ----------- |
+| `code.namespace` | x | x | Class/module of the test suite |
+| `code.function` | x | x | Function or method of the test case |
+| `tests.suite.suitename` | x | x | Name of the test suite |
+| `tests.case.classname` | x | x | Classname or file for the test case |
+| `tests.case.duration` | x | | Duration of the test case |
+| `tests.case.error` | x | | Error message of the test case |
+| `tests.case.message` | x | | Message of the test case |
+| `tests.case.status` | x | | Status of the test case |
+| `tests.case.systemerr` | x | | Log produced by Systemerr |
+| `tests.case.systemout` | x | | Log produced by Systemout |
 
 ## Docker image
 It's possible to run the binary as a Docker image. To build and use the image
@@ -244,6 +294,7 @@ cat TEST-sample3.xml | docker run --rm -i --network elastic_junit2otlp --volume 
   - We are passing command line flags to the container, setting the service name (_DOCKERFOO_) and the trace name (_TRACEBAR_).
 
 ## Demos
+
 To demonstrate how traces and metrics are sent to different back-ends, we are provising the following demos:
 
 - Elastic
@@ -252,6 +303,7 @@ To demonstrate how traces and metrics are sent to different back-ends, we are pr
 - Zipkin
 
 ### Elastic
+
 It will use the Elastic Stack as back-end, sending the traces, spans and metrics through the APM Server, storing them in Elasticsearch and finally using Kibana as visualisation layer.
 
 ```shell
@@ -264,6 +316,7 @@ open http://localhost:5601/app/apm/services?rangeFrom=now-15m&rangeTo=now&compar
 ```
 
 ### Jaeger
+
 It will use Jaeger as back-end, sending the traces, spans and metrics through the OpenTelemetry collector, storing them in memory.
 
 ```shell
@@ -276,6 +329,7 @@ open http://localhost:16686
 ```
 
 ### Prometheus
+
 It will use Prometheus as back-end, sending the traces, spans and metrics through the OpenTelemetry collector, storing them in memory.
 
 ```shell
@@ -288,6 +342,7 @@ open http://localhost:9090
 ```
 
 ### Zipkin
+
 It will use Prometheus as back-end, sending the traces, spans and metrics through the OpenTelemetry collector, storing them in memory.
 
 ```shell
