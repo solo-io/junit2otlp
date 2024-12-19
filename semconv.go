@@ -19,7 +19,7 @@ const (
 	ScmRepository = "scm.repository"
 	ScmType       = "scm.type"
 
-	// suite metrics
+	// test suite metrics
 	FailedTestsCount  = "tests.suite.failed"
 	ErrorTestsCount   = "tests.suite.error"
 	PassedTestsCount  = "tests.suite.passed"
@@ -36,12 +36,12 @@ const (
 	CaseDuration     = "tests.case.duration"
 	CaseDurationHist = "tests.case.duration.histogram"
 
-	// suite keys
+	// test suite keys
 	TestsSuiteName = "tests.suite.suitename"
 	TestsSystemErr = "tests.suite.systemerr"
 	TestsSystemOut = "tests.suite.systemout"
 
-	// test keys
+	// test case keys
 	TestClassName = "tests.case.classname"
 	TestDuration  = "tests.case.duration"
 	TestError     = "tests.case.error"

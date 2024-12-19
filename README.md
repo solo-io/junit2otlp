@@ -272,6 +272,7 @@ For each test case in the test execution, the tool will add the following attrib
 | `tests.case.systemout` | x | | Log produced by Systemout |
 
 ## Docker image
+
 It's possible to run the binary as a Docker image. To build and use the image
 
 1. First build the Docker image using this Make goal:
