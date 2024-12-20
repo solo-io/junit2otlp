@@ -25,6 +25,9 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+const defaultMaxBatchSize = 10
+
+var batchSizeFlag int
 var repositoryPathFlag string
 var serviceNameFlag string
 var serviceVersionFlag string
@@ -39,13 +42,14 @@ var runtimeAttributes []attribute.KeyValue
 var propsAllowed []string
 
 func init() {
+	flag.IntVar(&batchSizeFlag, "batch-size", defaultMaxBatchSize, "Maximum export batch size allowed when creating a BatchSpanProcessor")
 	flag.StringVar(&repositoryPathFlag, "repository-path", getDefaultwd(), "Path to the SCM repository to be read")
 	flag.StringVar(&serviceNameFlag, "service-name", "", "OpenTelemetry Service Name to be used when sending traces and metrics for the jUnit report")
 	flag.StringVar(&serviceVersionFlag, "service-version", "", "OpenTelemetry Service Version to be used when sending traces and metrics for the jUnit report")
 	flag.StringVar(&traceNameFlag, "trace-name", Junit2otlp, "OpenTelemetry Trace Name to be used when sending traces and metrics for the jUnit report")
 	flag.StringVar(&propertiesAllowedString, "properties-allowed", propertiesAllowAll, "Comma separated list of properties to be allowed in the jUnit report")
-	flag.BoolVar(&skipTracesFlag, "skip-traces", false, "Skip sending traces to the OpenTelemetry collector")
-	flag.BoolVar(&skipMetricsFlag, "skip-metrics", false, "Skip sending metrics to the OpenTelemetry collector")
+	flag.BoolVar(&skipTracesFlag, "traces-skip-sending", false, "Skip sending traces to the OpenTelemetry collector")
+	flag.BoolVar(&skipMetricsFlag, "metrics-skip-sending", false, "Skip sending metrics to the OpenTelemetry collector")
 
 	// initialize runtime keys
 	runtimeAttributes = []attribute.KeyValue{
@@ -209,7 +213,12 @@ func initTracerProvider(ctx context.Context, res *resource.Resource) (*sdktrace.
 
 	tracerProvider := sdktrace.NewTracerProvider(
 		sdktrace.WithResource(res),
-		sdktrace.WithSpanProcessor(sdktrace.NewBatchSpanProcessor(traceExporter)),
+		sdktrace.WithSpanProcessor(
+			sdktrace.NewBatchSpanProcessor(
+				traceExporter,
+				sdktrace.WithMaxExportBatchSize(batchSizeFlag),
+			),
+		),
 	)
 
 	otel.SetTracerProvider(tracerProvider)
@@ -240,7 +249,10 @@ type InputReader interface {
 type PipeReader struct{}
 
 func (pr *PipeReader) Read() ([]byte, error) {
-	stat, _ := os.Stdin.Stat()
+	stat, err := os.Stdin.Stat()
+	if err != nil {
+		return nil, err
+	}
 
 	if (stat.Mode() & os.ModeCharDevice) == 0 {
 		var buf []byte
