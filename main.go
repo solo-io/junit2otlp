@@ -52,23 +52,11 @@ func init() {
 	flag.BoolVar(&skipTracesFlag, "skip-traces", false, "Skip sending traces to the OpenTelemetry collector")
 	flag.BoolVar(&skipMetricsFlag, "skip-metrics", false, "Skip sending metrics to the OpenTelemetry collector")
 	flag.StringVar(&addAttributes, "add-attributes", "", "Comma separated list of attributes to be added to the jUnit report")
-	flag.Parse()
 
 	// initialize runtime keys
 	runtimeAttributes = []attribute.KeyValue{
 		semconv.HostArchKey.String(runtime.GOARCH),
 		semconv.OSNameKey.String(runtime.GOOS),
-	}
-
-	// add additional attributes if provided
-	if addAttributes != "" {
-		addAttrs := strings.Split(addAttributes, ",")
-		for _, attr := range addAttrs {
-			kv := strings.Split(attr, "=")
-			if len(kv) == 2 {
-				runtimeAttributes = append(runtimeAttributes, attribute.Key(kv[0]).String(kv[1]))
-			}
-		}
 	}
 
 	propsAllowed = []string{}
@@ -345,6 +333,17 @@ func Main(ctx context.Context, reader InputReader) error {
 
 	ctx = initOtelContext(ctx)
 
+	// add additional attributes if provided to the runtime attributes
+	if addAttributes != "" {
+		addAttrs := strings.Split(addAttributes, ",")
+		for _, attr := range addAttrs {
+			kv := strings.Split(attr, "=")
+			if len(kv) == 2 {
+				runtimeAttributes = append(runtimeAttributes, attribute.Key(kv[0]).String(kv[1]))
+			}
+		}
+	}
+
 	// set the service name that will show up in tracing UIs
 	resAttrs := resource.WithAttributes(
 		semconv.ServiceNameKey.String(otlpSrvName),
@@ -388,6 +387,8 @@ func Main(ctx context.Context, reader InputReader) error {
 }
 
 func main() {
+	flag.Parse()
+
 	if err := Main(context.Background(), &PipeReader{}); err != nil {
 		log.Fatal(err)
 	}
