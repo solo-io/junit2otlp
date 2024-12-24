@@ -9,12 +9,12 @@ endef
 define start_demo
 	mkdir demos/$(1)/build
 	touch demos/$(1)/build/tests.json
-	docker-compose -f demos/$(1)/docker-compose.yml up -d
+	docker compose -f demos/$(1)/docker-compose.yml up -d
 	env | grep OTEL
 endef
 
 define stop_demo
-	docker-compose -f demos/$(1)/docker-compose.yml down --remove-orphans --volumes
+	docker compose -f demos/$(1)/docker-compose.yml down --remove-orphans --volumes
 	rm -fr demos/$(1)/build
 endef
 
@@ -51,3 +51,6 @@ demo-start-zipkin:
 
 demo-stop-zipkin:
 	$(call stop_demo,zipkin)
+
+test:
+	go run gotest.tools/gotestsum --debug --format short-verbose -- -timeout=5m ./...
